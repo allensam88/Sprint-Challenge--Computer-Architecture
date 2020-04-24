@@ -1,16 +1,4 @@
-"""CPU functionality."""
-
-import sys
-
-if len(sys.argv) == 2:
-    program_filename = sys.argv[1]
-else:
-    print('Invalid entry --> please enter the program name.')
-    exit()
-
-
 class CPU:
-
     def __init__(self):
         self.ram = [0] * 256
         self.register = [0] * 8
@@ -31,7 +19,7 @@ class CPU:
         self.dispatch[86] = self.JNE  # 0b01010110
         self.dispatch[130] = self.LDI  # 0b10000010
 
-    def load(self):
+    def load(self, program_filename):
         address = 0
 
         with open(program_filename) as f:
@@ -50,11 +38,8 @@ class CPU:
         self.running = False
 
     def RET(self, operand_a=None, operand_b=None):
-        # pop return address from top of stack
         return_addr = self.ram_read(self.register[self.sp])
         self.register[self.sp] += 1
-
-        # Set the pc
         self.pc = return_addr
 
     def PUSH(self, operand_a, operand_b=None):
@@ -72,36 +57,22 @@ class CPU:
         print("Print Value: ", self.register[operand_a])
 
     def CALL(self, operand_a, operand_b=None):
-        # compute return address
         return_addr = self.pc + 2
-
-        # push on the stack
         self.register[self.sp] -= 1
         self.ram_write(self.register[self.sp], return_addr)
-
-        # Set the PC to the value in the given register
-        # reg_num = self.ram_read(self.pc + 1)
-        # dest_addr = self.register[reg_num]
         dest_addr = self.register[operand_a]
-
         self.pc = dest_addr
 
-    # Jump to the address stored in the given register.
     def JMP(self, operand_a, operand_b=None):
-        # Set the PC to the address stored in the given register.
         self.pc = self.register[operand_a]
 
-    # Jump if equal flag is set (true)
     def JEQ(self, operand_a, operand_b=None):
-        # jump to the address stored in the given register.
         if self.flag == 1:
             self.pc = self.register[operand_a]
         else:
             self.pc += 2
 
-    # Jump if equal flag is clear (false, 0)
     def JNE(self, operand_a, operand_b=None):
-        # jump to the address stored in the given register.
         if self.flag != 1:
             self.pc = self.register[operand_a]
         else:
@@ -165,13 +136,8 @@ class CPU:
     def run(self):
         while self.running:
             instruction = self.ram_read(self.pc)
-            # this will be either 0, 1 or 2 (How many operands do I have?)
             inst_len = ((instruction & 0b11000000) >> 6) + 1
-
-            # this will be either a 1 or 0.  Yes or No
             use_alu = ((instruction & 0b00100000) >> 5)
-
-            # this will be either a 1 or 0.  Yes or No
             pc_setter = ((instruction & 0b00010000) >> 4)
 
             if inst_len >= 1:
@@ -180,19 +146,15 @@ class CPU:
             if inst_len >= 2:
                 operand_b = self.ram_read(self.pc + 2)
 
-            # if the operation utilizes the alu
             if use_alu:
                 self.alu(instruction, operand_a, operand_b)
                 self.pc += inst_len
                 # self.trace()
 
-            # if the operation directly set the PC, then don't auto-increment
-            # Call, Return, Jumps...
             elif pc_setter:
                 self.dispatch[instruction](operand_a, operand_b)
                 # self.trace()
 
-                # in all other cases, dispatch the op and auto-increment
             elif self.dispatch.get(instruction):
                 self.dispatch[instruction](operand_a, operand_b)
                 self.pc += inst_len
