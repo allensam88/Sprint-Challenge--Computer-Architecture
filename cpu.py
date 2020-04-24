@@ -26,6 +26,7 @@ class CPU:
         self.dispatch[70] = self.POP  # 01000110
         self.dispatch[71] = self.PRN  # 0b01000111
         self.dispatch[80] = self.CALL  # 0b01010000
+        self.dispatch[84] = self.JMP  # 0b01010100
         self.dispatch[130] = self.LDI  # 0b10000010
 
     def load(self):
@@ -46,6 +47,14 @@ class CPU:
     def HLT(self, operand_a=None, operand_b=None):
         self.running = False
 
+    def RET(self, operand_a=None, operand_b=None):
+        # pop return address from top of stack
+        return_addr = self.ram_read(self.register[self.sp])
+        self.register[self.sp] += 1
+
+        # Set the pc
+        self.pc = return_addr
+
     def PUSH(self, operand_a, operand_b=None):
         self.register[self.sp] -= 1
         value = self.register[operand_a]
@@ -59,9 +68,6 @@ class CPU:
 
     def PRN(self, operand_a, operand_b=None):
         print("Print Value: ", self.register[operand_a])
-
-    def LDI(self, operand_a, operand_b):
-        self.register[operand_a] = operand_b
 
     def CALL(self, operand_a, operand_b=None):
         # compute return address
@@ -78,13 +84,13 @@ class CPU:
 
         self.pc = dest_addr
 
-    def RET(self, operand_a=None, operand_b=None):
-        # pop return address from top of stack
-        return_addr = self.ram_read(self.register[self.sp])
-        self.register[self.sp] += 1
+    # Jump to the address stored in the given register.
+    def JMP(self, operand_a, operand_b=None):
+        # Set the PC to the address stored in the given register.
+        self.pc = self.register[operand_a]
 
-        # Set the pc
-        self.pc = return_addr
+    def LDI(self, operand_a, operand_b):
+        self.register[operand_a] = operand_b
 
     def alu(self, op, reg_a, reg_b):
         # ADD
