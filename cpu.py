@@ -16,6 +16,7 @@ class CPU:
         self.register = [0] * 8
         self.pc = 0
         self.sp = 7
+        self.flag = 0
         self.register[self.sp] = 0xF4  # 244 decimal
         self.running = True
         self.dispatch = {}
@@ -98,6 +99,16 @@ class CPU:
         # DIV
         elif op == 163:
             self.register[reg_a] /= self.register[reg_b]
+        # CMP
+        elif op == 167:
+            if self.register[reg_a] == self.register[reg_b]:
+                self.flag = 0b00000001
+            elif self.register[reg_a] > self.register[reg_b]:
+                self.flag = 0b00000010
+            elif self.register[reg_a] < self.register[reg_b]:
+                self.flag = 0b00000100
+            else:
+                self.flag = 0b00000000
         else:
             raise Exception("Unsupported ALU operation")
 
