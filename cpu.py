@@ -27,6 +27,8 @@ class CPU:
         self.dispatch[71] = self.PRN  # 0b01000111
         self.dispatch[80] = self.CALL  # 0b01010000
         self.dispatch[84] = self.JMP  # 0b01010100
+        self.dispatch[85] = self.JEQ  # 0b01010101
+        # self.dispatch[86] = self.JNE  # 0b01010110
         self.dispatch[130] = self.LDI  # 0b10000010
 
     def load(self):
@@ -88,6 +90,14 @@ class CPU:
     def JMP(self, operand_a, operand_b=None):
         # Set the PC to the address stored in the given register.
         self.pc = self.register[operand_a]
+
+    # Jump if equal flag is set (true)
+    def JEQ(self, operand_a, operand_b=None):
+        # jump to the address stored in the given register.
+        if self.flag == 1:
+            self.pc = self.register[operand_a]
+        else:
+            self.pc += 2
 
     def LDI(self, operand_a, operand_b):
         self.register[operand_a] = operand_b
